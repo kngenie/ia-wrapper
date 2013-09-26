@@ -18,10 +18,13 @@ options:
     --d1                       Return the primary server.
     --d2                       Return the secondary server.
     -t, --target <target>      Return specified target, only.
+    --fmt <output-format>      Output format for --files, in PEP-3101 (Advanced
+                               String Formtting) style (ex. "{name}\\t{size}".)
 
 """
 from docopt import docopt
 import sys
+import re
 
 import internetarchive
 
@@ -63,9 +66,11 @@ def main(argv):
 
     # Get metadata.
     elif args['--files']:
+        fmt = (args['--fmt'][0] if args['--fmt']
+               else r'{item}\t{name}\t{source}\t{format}\t{size}\t{md5}')
+        fmt = re.sub(r'\\.', lambda m: eval('"'+m.group()+'"'), fmt)
         for f in item.files():
-            files_md = [f.item.identifier, f.name, f.source, f.format, f.size, f.md5]
-            sys.stdout.write('\t'.join([str(x) for x in files_md]) + '\n')
+            sys.stdout.write(fmt.format(**f.__dict__) + '\n')
     elif args['--formats']:
         formats = set([f.format for f in item.files()])
         sys.stdout.write('\n'.join(formats))
